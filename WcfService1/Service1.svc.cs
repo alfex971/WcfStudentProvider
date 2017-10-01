@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity.Migrations;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
@@ -13,35 +16,110 @@ namespace WcfService1
     public class Service1 : IService1
     {
         private static List<Student> list = new List<Student>();
+        public static Student Student = new Student();
+        private const string connectionString =
+                "Data Source=alfexdb.database.windows.net;Initial Catalog=StudentDB;Integrated Security=False;User ID=alfex971;Password=Varchev1!;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
+            ;
+
+        private static Student ReadStudent(IDataRecord reader)
+        {
+            int id = reader.GetInt32(0);
+            string name = reader.GetString(1);
+            string clas = reader.GetString(2);
+            // DateTime timeStamp = reader.GetDateTime(3);
+            Student student = new Student
+            {
+                Id = id,
+                Name = name,
+                Clas = clas,
+                //TimeStamp = timeStamp
+            };
+            return student;
+        }
 
         public Student GetStudent(string name)
         {
-            Student a= list.Find(student => student.Name == name);
-            return a;
+            const string getStudentByName = "select * from Student where name=@name";
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                using (SqlCommand selectCommand = new SqlCommand(getStudentByName, sqlConnection))
+                {
+                    selectCommand.Parameters.AddWithValue("@name", name);
+                    using (SqlDataReader reader = selectCommand.ExecuteReader())
+                    {
+                        if (!reader.HasRows)
+                        {
+                            throw new ArgumentNullException("name","Doesn`t exist in the database");
+                            //return null;
+                        }
+                        reader.Read();
+                        var student = ReadStudent(reader);
+                        Student = student;
+                        return student;
+                    }
+                }
+            }
+            //Student a= list.Find(student => student.Name == name);
         }
 
-        public void AddStudent(string name, string clas)
+        public int AddStudent(string name, string clas)
         {
-            Student student = new Student(name,clas);
-            list.Add(student);
+            const string insertQuery = "insert into Student (Name, Class) values (@name, @class)";
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                using (SqlCommand insertCommand = new SqlCommand(insertQuery, sqlConnection))
+                {
+                    insertCommand.Parameters.AddWithValue("@name", name);
+                    insertCommand.Parameters.AddWithValue("@class", clas);
+                    int rowsAffected = insertCommand.ExecuteNonQuery();
+                    if (rowsAffected==0)
+                    {
+                        throw new InvalidExpressionException();
+                    }
+                    return rowsAffected;
+                }
+            }
+            //  _studentDbEntities.Students.AddOrUpdate(new Student(){Name = name,Class = clas});
+            //Student student = new Student(name,clas);
+            //list.Add(student);
         }
 
-        public void RemoveStudent(string name,string clas)
+        public int RemoveStudent(string name)
         {
-            Student student = new Student(name, clas);
-            list.Remove(student);
+            const string removeQuery = "delete from Student where name=@name";
+            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            {
+                sqlConnection.Open();
+                using (SqlCommand deleteCommand = new SqlCommand(removeQuery, sqlConnection))
+                {
+                    deleteCommand.Parameters.AddWithValue("@name", name);
+                    int rowsAffected = deleteCommand.ExecuteNonQuery();
+                    if (rowsAffected==0)
+                    {
+                        throw new AggregateException("There is no such Student");
+                    }
+                    return rowsAffected;
+                }
+                //Student student = new Student(name, clas);
+                //list.Remove(student);
+            }
         }
 
-        public void EditStudetn(string name, string clas)
+        public void EditStudent(string name, string clas)
         {
-            var a = list.Find(student => student.Name == name);
-            a.Clas = clas;
-            list.Add(a);
+            //_studentDbEntities.Students.
+            //var a = list.Find(student => student.Name == name);
+            //a.Clas = clas;
+            //list.Add(a);
         }
 
-        public List<Student> GetStudents()
-        {
-           return list.FindAll(student => student.Name != null);
-        }
+        //public List<Student> GetStudents()
+        //{
+        ////    _studentDbEntities.Students.Find()
+        ////   return list.FindAll(student => student.Name != null);
+        //}
     }
 }
+

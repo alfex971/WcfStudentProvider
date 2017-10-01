@@ -16,16 +16,16 @@ namespace WcfService1
         [OperationContract]
         Student GetStudent(string name);
         [OperationContract]
-        void AddStudent(string name, string clas);
+        int AddStudent(string name, string clas);
 
         [OperationContract]
-        void RemoveStudent(string name,string clas);
+        int RemoveStudent(string name);
 
         [OperationContract]
-        void EditStudetn(string name, string clas);
+        void EditStudent(string name, string clas);
 
-        [OperationContract]
-        List<Student> GetStudents();
+        //[OperationContract]
+       // List<Student> GetStudents();
     }
 
 
@@ -33,11 +33,13 @@ namespace WcfService1
     [DataContract]
     public class Student
     {
-        public Student(string name, string clas)
-        {
-            Name = name;
-            Clas = clas;
-        }
+        //public Student(string name, string clas)
+        //{
+        //    Name = name;
+        //    Clas = clas;
+        //}
+        [DataMember]
+        public int Id { get; set; }
         [DataMember]
         public string Name { get; set; }
         [DataMember]
