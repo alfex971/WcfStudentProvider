@@ -18,7 +18,7 @@ namespace UnitTestProject1
         public void TestMethod2()
         {
             Service1 service1 = new Service1();
-            service1.GetStudent("Pitka");
+            service1.GetStudent("Aleks");
         }
 
         [TestMethod]
